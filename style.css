@@ -249,3 +249,97 @@ kbd {
 #restart-btn:hover {
   background: var(--accent-hover);
 }
+
+/* ---- Tabla de récords ---- */
+.name-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.name-form.hidden {
+  display: none;
+}
+
+#player-name-input {
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  color: var(--fg);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  width: 140px;
+}
+
+#save-score-btn {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.highscores-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  width: 220px;
+}
+
+.highscores-panel.hidden {
+  display: none;
+}
+
+.highscores-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.highscores-table td {
+  padding: 3px 6px;
+  color: var(--fg);
+  text-align: left;
+}
+
+.highscores-table tr.hs-highlight td {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.hs-empty {
+  text-align: center !important;
+  color: var(--label);
+}
+
+.hs-bests {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--label);
+}
+
+.hs-bests strong {
+  color: var(--accent);
+}
+
+.reset-btn {
+  background: transparent;
+  border: 1px solid var(--kbd-border);
+  color: var(--control-fg);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.reset-btn:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
