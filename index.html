@@ -67,6 +67,46 @@
         <button id="restart-btn">Reiniciar</button>
       </div>
     </div>
+
+    <div id="pause-menu" class="overlay hidden">
+      <div class="overlay-box pause-box">
+        <div id="pause-main-view">
+          <p class="pause-title">PAUSA</p>
+          <div class="pause-level-select">
+            <label for="start-level-select">Nivel inicial</label>
+            <select id="start-level-select">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <div class="pause-buttons">
+            <button id="resume-btn">Reanudar</button>
+            <button id="pause-restart-btn">Reiniciar</button>
+            <button id="show-controls-btn">Ver controles</button>
+          </div>
+        </div>
+        <div id="pause-controls-view" class="hidden">
+          <p class="pause-title">CONTROLES</p>
+          <ul class="pause-controls-list">
+            <li><kbd>←</kbd><kbd>→</kbd> mover</li>
+            <li><kbd>↓</kbd> soft drop</li>
+            <li><kbd>X</kbd> rotar</li>
+            <li><kbd>Space</kbd> hard drop</li>
+            <li><kbd>C</kbd>/<kbd>Shift</kbd> hold</li>
+            <li><kbd>P</kbd>/<kbd>Esc</kbd> pausa</li>
+          </ul>
+          <button id="back-from-controls-btn">Volver</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="game.js"></script>
