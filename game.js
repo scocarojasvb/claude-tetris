@@ -95,11 +95,23 @@ const showControlsBtn = document.getElementById('show-controls-btn');
 const backFromControlsBtn = document.getElementById('back-from-controls-btn');
 const startLevelSelect = document.getElementById('start-level-select');
 const skinSelect = document.getElementById('skin-select');
+const nameForm = document.getElementById('name-form');
+const nameInput = document.getElementById('player-name-input');
+const saveScoreBtn = document.getElementById('save-score-btn');
+const highscoresPanel = document.getElementById('highscores-panel');
+const highscoresBody = document.getElementById('highscores-body');
+const bestComboEl = document.getElementById('best-combo');
+const bestLinesEl = document.getElementById('best-lines');
+const resetScoresBtn = document.getElementById('reset-scores-btn');
 
-let board, current, next, hold, canHold, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let board, current, next, hold, canHold, score, lines, level, combo, maxCombo, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let theme = 'dark';
 let startLevel = 1;
 let skin = 'retro';
+
+const HS_KEY = 'tetris-highscores';
+const BEST_COMBO_KEY = 'tetris-best-combo';
+const BEST_LINES_KEY = 'tetris-best-lines';
 
 function applyTheme(name) {
   theme = name;
@@ -213,8 +225,11 @@ function clearLines() {
     score += (LINE_SCORES[cleared] || 0) * level;
     level = Math.floor(lines / 10) + 1;
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+    combo++;
+    maxCombo = Math.max(maxCombo, combo);
     updateHUD();
   }
+  return cleared;
 }
 
 function ghostY() {
@@ -242,7 +257,8 @@ function softDrop() {
 
 function lockPiece() {
   merge();
-  clearLines();
+  const cleared = clearLines();
+  if (cleared === 0) combo = 0;
   spawn();
   canHold = true;
   holdCanvas.classList.remove('locked');
@@ -412,11 +428,119 @@ function drawHold() {
       drawBlock(holdCtx, offX + c, offY + r, shape[r][c], NB);
 }
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function getHighscores() {
+  try {
+    const raw = localStorage.getItem(HS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHighscores(list) {
+  localStorage.setItem(HS_KEY, JSON.stringify(list));
+}
+
+function getBestCombo() {
+  return Number(localStorage.getItem(BEST_COMBO_KEY)) || 0;
+}
+
+function getBestLines() {
+  return Number(localStorage.getItem(BEST_LINES_KEY)) || 0;
+}
+
+function updateBests(currentMaxCombo, currentLines) {
+  const bestCombo = Math.max(getBestCombo(), currentMaxCombo);
+  const bestLines = Math.max(getBestLines(), currentLines);
+  localStorage.setItem(BEST_COMBO_KEY, String(bestCombo));
+  localStorage.setItem(BEST_LINES_KEY, String(bestLines));
+}
+
+function qualifiesForTop(list, s) {
+  if (list.length < 5) return true;
+  return s > Math.min(...list.map(e => e.score));
+}
+
+function addHighscore(entry) {
+  const list = getHighscores();
+  list.push(entry);
+  list.sort((a, b) => b.score - a.score);
+  const trimmed = list.slice(0, 5);
+  saveHighscores(trimmed);
+  return trimmed;
+}
+
+function renderHighscores(list, highlightEntry) {
+  const data = list || getHighscores();
+  highscoresBody.innerHTML = '';
+  if (data.length === 0) {
+    const row = document.createElement('tr');
+    row.innerHTML = '<td colspan="4" class="hs-empty">Sin récords aún</td>';
+    highscoresBody.appendChild(row);
+  } else {
+    data.forEach((entry, i) => {
+      const row = document.createElement('tr');
+      if (highlightEntry && entry === highlightEntry) row.classList.add('hs-highlight');
+      row.innerHTML = `<td>${i + 1}</td><td>${escapeHtml(entry.name)}</td><td>${entry.score.toLocaleString()}</td><td>${entry.lines}</td>`;
+      highscoresBody.appendChild(row);
+    });
+  }
+  bestComboEl.textContent = getBestCombo();
+  bestLinesEl.textContent = getBestLines();
+}
+
+function resetHighscores() {
+  localStorage.removeItem(HS_KEY);
+  localStorage.removeItem(BEST_COMBO_KEY);
+  localStorage.removeItem(BEST_LINES_KEY);
+  renderHighscores();
+}
+
+function showStartScreen() {
+  gameOver = true;
+  paused = false;
+  overlayTitle.textContent = 'TETRIS';
+  overlayScore.textContent = '';
+  restartBtn.textContent = 'Jugar';
+  nameForm.classList.add('hidden');
+  highscoresPanel.classList.remove('hidden');
+  renderHighscores();
+  overlay.classList.remove('hidden');
+}
+
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
   overlayTitle.textContent = 'GAME OVER';
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
+  restartBtn.textContent = 'Reiniciar';
+  highscoresPanel.classList.remove('hidden');
+  updateBests(maxCombo, lines);
+
+  const list = getHighscores();
+  if (qualifiesForTop(list, score)) {
+    nameForm.classList.remove('hidden');
+    nameInput.value = '';
+    renderHighscores(list);
+    saveScoreBtn.onclick = () => {
+      const name = (nameInput.value.trim() || 'AAA').slice(0, 12);
+      const entry = { name, score, lines, combo: maxCombo };
+      const updated = addHighscore(entry);
+      nameForm.classList.add('hidden');
+      renderHighscores(updated, entry);
+    };
+  } else {
+    nameForm.classList.add('hidden');
+    renderHighscores(list);
+  }
+
   overlay.classList.remove('hidden');
 }
 
@@ -478,6 +602,8 @@ function init() {
   score = 0;
   lines = 0;
   level = startLevel;
+  combo = 0;
+  maxCombo = 0;
   paused = false;
   gameOver = false;
   dropInterval = Math.max(100, 1000 - (level - 1) * 90);
@@ -540,8 +666,12 @@ pauseRestartBtn.addEventListener('click', init);
 showControlsBtn.addEventListener('click', showPauseControlsView);
 backFromControlsBtn.addEventListener('click', showPauseMainView);
 startLevelSelect.addEventListener('change', () => applyStartLevel(parseInt(startLevelSelect.value, 10)));
+resetScoresBtn.addEventListener('click', resetHighscores);
+nameInput.addEventListener('keydown', e => {
+  if (e.code === 'Enter') saveScoreBtn.click();
+});
 
 initTheme();
 initStartLevel();
 initSkin();
-init();
+showStartScreen();
