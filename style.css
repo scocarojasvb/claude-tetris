@@ -85,7 +85,7 @@ body {
   width: 160px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
   padding-top: 4px;
 }
 
@@ -110,11 +110,16 @@ body {
   letter-spacing: 1px;
 }
 
-#next-canvas {
+#next-canvas, #hold-canvas {
   display: block;
   border: 1px solid var(--board-border);
   background: var(--board-bg);
   border-radius: 4px;
+}
+
+#hold-canvas.locked {
+  opacity: 0.35;
+  transition: opacity 0.15s;
 }
 
 /* ---- Theme toggle ---- */

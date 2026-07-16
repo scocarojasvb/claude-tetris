@@ -10,6 +10,20 @@
   <div class="wrapper">
     <h1 class="game-title">TETRIS</h1>
     <div class="game-container">
+      <aside class="panel panel-left">
+        <div class="panel-section controls">
+          <span class="label">CONTROLS</span>
+          <ul>
+            <li><kbd>←</kbd><kbd>→</kbd> mover</li>
+            <li><kbd>↑</kbd> rotar</li>
+            <li><kbd>↓</kbd> bajar</li>
+            <li><kbd>Space</kbd> caída</li>
+            <li><kbd>C</kbd> reservar</li>
+            <li><kbd>P</kbd> pausa</li>
+          </ul>
+        </div>
+      </aside>
+
       <canvas id="board" width="300" height="600"></canvas>
 
       <aside class="panel">
@@ -27,6 +41,11 @@
         </div>
 
         <div class="panel-section">
+          <span class="label">HOLD</span>
+          <canvas id="hold-canvas" width="120" height="120"></canvas>
+        </div>
+
+        <div class="panel-section">
           <span class="label">NEXT</span>
           <canvas id="next-canvas" width="120" height="120"></canvas>
         </div>
@@ -37,17 +56,6 @@
             <input type="checkbox" id="theme-toggle" />
             <span class="switch-slider"></span>
           </label>
-        </div>
-
-        <div class="panel-section controls">
-          <span class="label">CONTROLS</span>
-          <ul>
-            <li><kbd>←</kbd><kbd>→</kbd> mover</li>
-            <li><kbd>↑</kbd> rotar</li>
-            <li><kbd>↓</kbd> bajar</li>
-            <li><kbd>Space</kbd> caída</li>
-            <li><kbd>P</kbd> pausa</li>
-          </ul>
         </div>
       </aside>
     </div>
