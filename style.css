@@ -169,6 +169,18 @@ body {
   transform: translateX(18px);
 }
 
+/* ---- Skin select ---- */
+#skin-select {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--kbd-bg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
 /* ---- Controles ---- */
 .controls ul {
   list-style: none;
