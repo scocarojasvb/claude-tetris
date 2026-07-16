@@ -1,0 +1,91 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+concurrency:
+  group: issue-triage-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  triage:
+    if: >
+      github.event.sender.type != 'Bot' &&
+      !contains(github.event.issue.body, '@claude') &&
+      !contains(github.event.issue.title, '@claude')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Issue Triage
+        id: claude-triage
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          prompt: |
+            Analiza el issue #${{ github.event.issue.number }} de este repositorio
+            (`gh issue view ${{ github.event.issue.number }}`) para clasificarlo y
+            hacer un diagnóstico técnico preliminar. No modifiques código ni crees PRs.
+
+            Contexto del proyecto: Tetris en JavaScript vanilla (HTML5 Canvas), sin
+            dependencias, sin build. Todo el estado y lógica vive en `game.js` como
+            variables globales de módulo (board, current, next, score, lines, level,
+            paused, gameOver, dropInterval, etc.). Componentes clave:
+            - Tablero: matriz ROWS x COLS (20x10).
+            - Piezas: matrices en PIECES; rotateCW transpone + invierte filas.
+            - Wall kicks en tryRotate (offsets [0,-1,1,-2,2]).
+            - collide(): única fuente de verdad para colisiones/límites.
+            - loop(): único requestAnimationFrame que acumula dt vs dropInterval.
+            - spawn(): mueve next -> current y genera nuevo next; colisión al spawnear
+              dispara endGame().
+            - Niveles: sube cada 10 líneas en clearLines; dropInterval = max(100, 1000 - (level-1)*90).
+            - draw(): grid -> tablero fijado -> ghost piece -> pieza actual.
+
+            Pasos:
+
+            1. Lee el título y cuerpo del issue. Si hace falta más contexto, inspecciona
+               `game.js`, `index.html` y `style.css` con Read/Grep para entender el área
+               afectada.
+
+            2. Determina los labels apropiados:
+               - Revisa los labels existentes con `gh label list`.
+               - Usa los labels estándar que apliquen (bug, enhancement, documentation,
+                 question, duplicate, invalid, wontfix, help wanted, good first issue).
+               - Además, usa o crea (si no existen; `gh label create` es idempotente si
+                 verificas antes con `gh label list`) labels específicos de área/prioridad
+                 de Tetris según corresponda, por ejemplo:
+                 - area:rendering (canvas, draw(), ghost piece)
+                 - area:gameplay (colisión, rotación, wall kicks, spawn)
+                 - area:input (controles de teclado)
+                 - area:scoring (puntaje, líneas, niveles/velocidad)
+                 - area:ui (HTML/CSS, layout)
+                 - priority:high / priority:low (según impacto)
+               - Aplica los labels con `gh issue edit ${{ github.event.issue.number }} --add-label "<label1>,<label2>"`.
+
+            3. Publica un diagnóstico como comentario
+               (`gh issue comment ${{ github.event.issue.number }} --body "..."`) con estas secciones:
+               - **Resumen**: qué reporta o pide el issue en una o dos frases.
+               - **Causa probable**: hipótesis técnica de la causa raíz (o, si es una
+                 feature request, qué se necesitaría).
+               - **Archivos/funciones afectadas**: referencias concretas a game.js
+                 (nombres de función/variable) u otros archivos relevantes.
+               - **Enfoque de solución sugerido**: pasos de alto nivel para implementar
+                 el fix o la feature, sin escribir el código todavía.
+
+               Antes de comentar, revisa con `gh issue view ${{ github.event.issue.number }} --comments`
+               si ya existe un comentario de diagnóstico previo publicado por este bot en
+               una ejecución anterior (esto puede pasar si el issue fue editado). Si existe,
+               publica un nuevo comentario indicando que es una versión actualizada del
+               diagnóstico en vez de repetir contenido idéntico.
+
+          claude_args: |
+            --allowed-tools "Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Bash(gh label list:*),Bash(gh label create:*),Read,Grep,Glob"
