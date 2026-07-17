@@ -249,3 +249,87 @@ kbd {
 #restart-btn:hover {
   background: var(--accent-hover);
 }
+
+/* ---- Menú de pausa ---- */
+.pause-box {
+  width: 220px;
+}
+
+.pause-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.pause-view.hidden {
+  display: none;
+}
+
+.pause-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.menu-btn {
+  background: var(--kbd-bg);
+  color: var(--fg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: background 0.15s;
+}
+
+.menu-btn:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.level-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--kbd-border);
+}
+
+.level-select label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--label);
+  font-weight: 600;
+}
+
+.level-select select {
+  background: var(--kbd-bg);
+  color: var(--fg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.pause-controls-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pause-controls-list li {
+  font-size: 13px;
+  color: var(--control-fg);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
