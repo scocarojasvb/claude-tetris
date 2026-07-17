@@ -54,10 +54,29 @@ const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeToggle = document.getElementById('theme-toggle');
 const skinSelect = document.getElementById('skin-select');
+const recordsListEl = document.getElementById('records-list');
+const overlayRecordsListEl = document.getElementById('overlay-records-list');
+const overlayRecordsSection = document.getElementById('overlay-records-section');
+const bestComboEl = document.getElementById('best-combo');
+const maxLinesEl = document.getElementById('max-lines');
+const resetRecordsBtn = document.getElementById('reset-records-btn');
+const newRecordForm = document.getElementById('new-record-form');
+const playerNameInput = document.getElementById('player-name');
+const saveRecordBtn = document.getElementById('save-record-btn');
+
+const RECORDS_KEY = 'tetris-records';
+const BEST_COMBO_KEY = 'tetris-best-combo';
+const MAX_LINES_KEY = 'tetris-max-lines';
 
 let board, current, next, hold, canHold, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let theme = 'dark';
 let skin = 'retro';
+let records = [];
+let bestCombo = 0;
+let maxLines = 0;
+let comboStreak = 0;
+let maxComboThisGame = 0;
+let pendingRecord = null;
 
 function applyTheme(name) {
   theme = name;
@@ -156,8 +175,69 @@ function clearLines() {
     score += (LINE_SCORES[cleared] || 0) * level;
     level = Math.floor(lines / 10) + 1;
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+    comboStreak++;
+    if (comboStreak > maxComboThisGame) maxComboThisGame = comboStreak;
     updateHUD();
+  } else {
+    comboStreak = 0;
   }
+}
+
+function loadRecords() {
+  try {
+    records = JSON.parse(localStorage.getItem(RECORDS_KEY)) || [];
+  } catch {
+    records = [];
+  }
+  bestCombo = Number(localStorage.getItem(BEST_COMBO_KEY)) || 0;
+  maxLines = Number(localStorage.getItem(MAX_LINES_KEY)) || 0;
+}
+
+function saveRecords() {
+  localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+  localStorage.setItem(BEST_COMBO_KEY, String(bestCombo));
+  localStorage.setItem(MAX_LINES_KEY, String(maxLines));
+}
+
+function qualifiesForTop(candidateScore) {
+  return records.length < 5 || candidateScore > records[records.length - 1].score;
+}
+
+function addRecord(name, candidateScore, candidateLines, candidateLevel) {
+  const entry = { name: name || 'AAA', score: candidateScore, lines: candidateLines, level: candidateLevel };
+  records.push(entry);
+  records.sort((a, b) => b.score - a.score);
+  records = records.slice(0, 5);
+  saveRecords();
+  return records.includes(entry) ? entry : null;
+}
+
+function renderRecords(highlightEntry) {
+  const renderList = (el) => {
+    el.innerHTML = '';
+    if (records.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'Sin récords aún';
+      li.className = 'empty';
+      el.appendChild(li);
+      return;
+    }
+    records.forEach((r) => {
+      const li = document.createElement('li');
+      const name = document.createElement('span');
+      name.textContent = r.name;
+      const value = document.createElement('span');
+      value.textContent = r.score.toLocaleString();
+      li.appendChild(name);
+      li.appendChild(value);
+      if (highlightEntry && r === highlightEntry) li.classList.add('highlight');
+      el.appendChild(li);
+    });
+  };
+  renderList(recordsListEl);
+  renderList(overlayRecordsListEl);
+  bestComboEl.textContent = bestCombo;
+  maxLinesEl.textContent = maxLines;
 }
 
 function ghostY() {
@@ -359,6 +439,24 @@ function endGame() {
   cancelAnimationFrame(animId);
   overlayTitle.textContent = 'GAME OVER';
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
+
+  if (lines > maxLines) maxLines = lines;
+  if (maxComboThisGame > bestCombo) bestCombo = maxComboThisGame;
+  saveRecords();
+
+  overlayRecordsSection.classList.remove('hidden');
+  if (qualifiesForTop(score)) {
+    pendingRecord = { score, lines, level };
+    playerNameInput.value = '';
+    newRecordForm.classList.remove('hidden');
+    renderRecords();
+    setTimeout(() => playerNameInput.focus(), 50);
+  } else {
+    pendingRecord = null;
+    newRecordForm.classList.add('hidden');
+    renderRecords();
+  }
+
   overlay.classList.remove('hidden');
 }
 
@@ -372,6 +470,8 @@ function togglePause() {
     cancelAnimationFrame(animId);
     overlayTitle.textContent = 'PAUSA';
     overlayScore.textContent = '';
+    newRecordForm.classList.add('hidden');
+    overlayRecordsSection.classList.add('hidden');
     overlay.classList.remove('hidden');
   }
 }
@@ -405,17 +505,23 @@ function init() {
   lastTime = performance.now();
   hold = null;
   canHold = true;
+  comboStreak = 0;
+  maxComboThisGame = 0;
+  pendingRecord = null;
   next = randomPiece();
   spawn();
   updateHUD();
   drawHold();
   holdCanvas.classList.remove('locked');
   overlay.classList.add('hidden');
+  newRecordForm.classList.add('hidden');
+  overlayRecordsSection.classList.add('hidden');
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
 }
 
 document.addEventListener('keydown', e => {
+  if (e.target === playerNameInput) return;
   if (e.code === 'KeyP') { togglePause(); return; }
   if (paused || gameOver) return;
   switch (e.code) {
@@ -453,6 +559,31 @@ skinSelect.addEventListener('change', () => {
   drawHold();
 });
 
+function submitRecord() {
+  if (!pendingRecord) return;
+  const name = playerNameInput.value.trim().slice(0, 12) || 'AAA';
+  const entry = addRecord(name, pendingRecord.score, pendingRecord.lines, pendingRecord.level);
+  pendingRecord = null;
+  newRecordForm.classList.add('hidden');
+  renderRecords(entry);
+}
+
+saveRecordBtn.addEventListener('click', submitRecord);
+playerNameInput.addEventListener('keydown', e => {
+  if (e.code === 'Enter') submitRecord();
+});
+
+resetRecordsBtn.addEventListener('click', () => {
+  if (!confirm('¿Borrar todos los récords?')) return;
+  records = [];
+  bestCombo = 0;
+  maxLines = 0;
+  saveRecords();
+  renderRecords();
+});
+
 initTheme();
 initSkin();
+loadRecords();
+renderRecords();
 init();
