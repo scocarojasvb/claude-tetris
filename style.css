@@ -249,3 +249,24 @@ kbd {
 #restart-btn:hover {
   background: var(--accent-hover);
 }
+
+/* ---- Skin select ---- */
+.skin-select {
+  background: var(--kbd-bg);
+  color: var(--fg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ---- Skin: neon ---- */
+[data-skin="neon"] #board,
+[data-skin="neon"] #next-canvas,
+[data-skin="neon"] #hold-canvas {
+  background: #05050a;
+  border-color: #1a3a3a;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.25), 0 0 40px rgba(0, 0, 0, 0.6);
+}
