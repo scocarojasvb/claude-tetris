@@ -122,6 +122,31 @@ body {
   transition: opacity 0.15s;
 }
 
+/* ---- Skin selector ---- */
+.skin-select {
+  background: var(--kbd-bg);
+  color: var(--fg);
+  border: 1px solid var(--kbd-border);
+  border-radius: 4px;
+  padding: 5px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+[data-skin="neon"] #board,
+[data-skin="neon"] #next-canvas,
+[data-skin="neon"] #hold-canvas {
+  background: #000000;
+  box-shadow: 0 0 30px rgba(0, 255, 240, 0.15);
+}
+
+[data-skin="pastel"] #board,
+[data-skin="pastel"] #next-canvas,
+[data-skin="pastel"] #hold-canvas {
+  background: #fbfaff;
+}
+
 /* ---- Theme toggle ---- */
 .theme-toggle {
   display: flex;
